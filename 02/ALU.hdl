@@ -42,5 +42,32 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+    
+    // 1. ZERO
+    // set x and y to 0[16] if if zx == 1
+    Mux16(a=x, b=false, sel=zx, out=zeroX16);
+    Mux16(a=y, b=false, sel=zy, out=zeroY16);
+
+    // 2. NEGATE
+    // set x to !x if nx == 1
+    Not16(in=zeroX16, out=notX);
+    Mux16(a=zeroX16, b=notX, sel=nx, out=notX16);
+    // set y to !y if ny == 1
+    Not16(in=zeroY16, out=notY);
+    Mux16(a=zeroY16, b=notY, sel=ny, out=notY16);
+
+    // 3. Compute X+Y and X&Y
+    And16(a=notX16, b=notY16, out=XandY);
+    Add16(a=notX16, b=notY16, out=XplusY);
+    // select + or & result based on f
+    Mux16(a=XandY, b=XplusY, sel=f, out=xy);
+
+    // 4. Negate output if no == 1
+    Not16(in=xy, out=notXY);
+    Mux16(a=xy, b=notXY, sel=no, out[15]=ng, out[0..7]=part1, out[8..15]=part2, out=out);
+
+    Not(in=nonzero, out=zr); 
+    Or(a=or1, b=or2, out=nonzero);
+    Or8Way(in=part1, out=or1);
+    Or8Way(in=part2, out=or2);
 }
